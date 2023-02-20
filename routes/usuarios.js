@@ -10,7 +10,7 @@ const {
 } = require('../middlewares');
 
 
-const { esRoleValido, emailExiste, existeUsuarioPorId } = require('../helpers/db-validators');
+const { esRoleValido, emailExiste, emailExistePut, existeUsuarioPorId, emailCorrecto } = require('../helpers/db-validators');
 
 const { usuariosGet,
         usuariosPut,
@@ -25,6 +25,7 @@ router.get('/', usuariosGet );
 
 router.put('/:id',[
     check('id', 'No es un ID válido').isMongoId(),
+    check('correo').custom( emailExiste ),
     check('id').custom( existeUsuarioPorId ),
     check('rol').custom( esRoleValido ), 
     validarCampos

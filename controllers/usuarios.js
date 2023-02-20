@@ -44,7 +44,7 @@ const usuariosPost = async(req, res = response) => {
 const usuariosPut = async(req, res = response) => {
 
     const { id } = req.params;
-    const { _id, password, google, correo, ...resto } = req.body;
+    const { _id, password, google,correo, ...resto } = req.body;
 
     if ( password ) {
         // Encriptar la contraseña
@@ -52,9 +52,30 @@ const usuariosPut = async(req, res = response) => {
         resto.password = bcryptjs.hashSync( password, salt );
     }
 
-    const usuario = await Usuario.findByIdAndUpdate( id, resto );
+    let correito = await Usuario.findById(id)
 
-    res.json(usuario);
+    if (!correito.correo || correito.correo!=resto.correo) {
+        correito = await Usuario.findByIdAndUpdate( id, resto, resto.correo );
+
+
+        const UsuarioActualizado = await Usuario.findById(id)
+
+        
+    
+        res.json(UsuarioActualizado);
+    } else {
+
+        correito = await Usuario.findByIdAndUpdate( id, resto );
+
+
+        const UsuarioActualizado = await Usuario.findById(id)
+
+        
+    
+        res.json(UsuarioActualizado);
+    }
+
+
 }
 
 const usuariosPatch = (req, res = response) => {
@@ -66,6 +87,12 @@ const usuariosPatch = (req, res = response) => {
 const usuariosDelete = async(req, res = response) => {
 
     const { id } = req.params;
+    const token = req.headers
+
+    if(!token) {
+        res.status.json('No hay token')
+    }
+
     const usuario = await Usuario.findByIdAndUpdate( id, { estado: false } );
 
     

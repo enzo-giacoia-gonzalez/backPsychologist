@@ -14,9 +14,25 @@ const emailExiste = async( correo = '' ) => {
     // Verificar si el correo existe
     const existeEmail = await Usuario.findOne({ correo });
     if ( existeEmail ) {
-        throw new Error(`El correo: ${ correo }, ya está registrado`);
+        throw new Error(`Estas intentando editar el correo ${ correo } por el mismo intentar poner uno nuevo o directamente no poner nada`);
     }
 }
+
+
+const emailCorrecto = ( correo = '' ) => {
+
+     const regexcorreo = correo.match(
+/^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      );
+
+      if (regexcorreo) {
+        throw new Error(`El correo ${correo } es incorrecto`);
+      }
+
+};
+
+
+
 
 const existeUsuarioPorId = async( id ) => {
 
@@ -39,6 +55,9 @@ const existeCategoriaPorId = async( id ) => {
     }
 }
 
+
+
+
 /**
  * Productos
  */
@@ -57,6 +76,8 @@ module.exports = {
     emailExiste,
     existeUsuarioPorId,
     existeCategoriaPorId,
-    existeProductoPorId
+    existeProductoPorId,
+    emailCorrecto
+    
 }
 

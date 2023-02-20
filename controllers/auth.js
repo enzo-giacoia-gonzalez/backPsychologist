@@ -1,13 +1,14 @@
-const { response } = require('express');
+const { response, request } = require('express');
 const bcryptjs = require('bcryptjs')
 
 const Usuario = require('../models/usuario');
 
 const { generarJWT } = require('../helpers/generar-jwt');
 const { googleVerify } = require('../helpers/google-verify');
+const transporter = require ('../helpers/nodemailer')
 
 
-const login = async(req, res = response) => {
+const login = async(req , res = response) => {
 
     const { correo, password } = req.body;
 
@@ -61,7 +62,7 @@ const googleSignin = async(req, res = response) => {
     try {
         const { correo, nombre, img } = await googleVerify( id_token );
 
-        let usuario = await Usuario.findOne({ correo });
+        const usuario = await Usuario.findOne({ correo });
 
         if ( !usuario ) {
             // Tengo que crearlo
@@ -104,9 +105,136 @@ const googleSignin = async(req, res = response) => {
 
 }
 
+const forgotPassword = async (req, res = response) => {
+
+
+
+   const {correo} = req.body 
+   const usuario = await Usuario.findOne({correo})
+
+   try {
+    if (!usuario) {
+        res.status(400).json({
+            message:'Intenta insertar un correo valido'
+        })
+       }
+
+    
+        const token = await generarJWT( usuario.id );
+
+        const verificationlink = `http://localhost:8080/recoverPassword/${token}`
+
+
+        const info = await transporter.sendMail({
+            from: 'enzogiacoia@hotmail.com', // sender address
+            to: usuario, // list of receivers
+            subject: "forgotPassword ", // Subject line
+            html: `<b>Has click en este enlace para cambiar tu contraseña</b>
+            <a href="${verificationlink}"></a>
+            `, // html body
+          });
+
+        
+    
+        res.status(200).json({
+         token,
+         verificationlink,
+         info
+        })
+   } catch (error) {
+    res.status(400).json({
+        error
+    })
+   
+   }
+
+
+   
+
+      
+
+  
+
+}
+
+const recoverPassword = async (req, res = response) => {
+
+    try {
+        const {correo} = req.params
+
+        let usuario = await Usuario.findOne({correo})
+        
+        const {password, repeatPassword} = req.body
+    
+        const token = req.headers
+    
+        if(!usuario) {
+           return res.status(400).json('No existe un usuario con ese correo')
+        }
+    
+    
+        if(!token) {
+            return res.status(400).json('No hay token')
+        }
+    
+        
+    
+       if (password!=repeatPassword){
+        return res.status(400).json('Contraseñas no coinciden')
+       }
+
+    
+       if (password===usuario.password){
+        return res.status(400).json('Contraseña usada Anteriormente intenta usar otra')
+       }
+      
+
+       const validPassword = bcryptjs.compareSync( password, usuario.password );
+       if ( validPassword ) {
+           return res.status(400).json({
+               msg: 'Contraseña usada anteriormente intenta usar otra'
+           });
+       }
+    
+       
+    
+       
+       
+      const salt = bcryptjs.genSaltSync();
+      usuario.password = bcryptjs.hashSync( password, salt );
+
+      
+    
+      
+
+      await usuario.save();
+    
+      res.status(200).json({
+        usuario,
+        msg:"Contraseña actualizada"
+      })
+    
+    } catch (error) {
+        res.status(401).json({
+            msg:error
+        })
+    }
+
+   
+
+
+
+    
+
+    // Guardar en BD
+
+
+}
 
 
 module.exports = {
     login,
-    googleSignin
+    googleSignin,
+    forgotPassword,
+    recoverPassword
 }

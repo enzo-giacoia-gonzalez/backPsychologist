@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node app"
+    "start": "nodemon app"
   },
   "keywords": [],
   "author": "",
@@ -17,6 +17,7 @@
     "express-validator": "^6.9.2",
     "google-auth-library": "^6.1.6",
     "jsonwebtoken": "^8.5.1",
-    "mongoose": "^5.11.15"
+    "mongoose": "^5.11.15",
+    "nodemailer": "^6.9.1"
   }
 }
