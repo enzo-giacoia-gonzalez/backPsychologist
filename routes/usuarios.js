@@ -36,6 +36,7 @@ router.post('/',[
     check('password', 'El password debe de ser más de 6 letras').isLength({ min: 6 }),
     check('correo', 'El correo no es válido').isEmail(),
     check('correo').custom( emailExiste ),
+    check('recordartucontrasena', 'Esta palabra es obligatoria').not().isEmpty(),
     // check('rol', 'No es un rol válido').isIn(['ADMIN_ROLE','USER_ROLE']),
     check('rol').custom( esRoleValido ), 
     validarCampos

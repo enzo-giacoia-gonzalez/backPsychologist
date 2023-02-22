@@ -15,6 +15,13 @@ const UsuarioSchema = Schema({
         type: String,
         required: [true, 'La contraseña es obligatoria'],
     },
+
+    recordartucontrasena: {
+        type: String,
+        required: [true, 'La palabra clave es obligatoria'],
+        unique: true
+    },
+
     img: {
         type: String,
     },

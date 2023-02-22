@@ -70,6 +70,7 @@ const googleSignin = async(req, res = response) => {
                 nombre,
                 correo,
                 password: ':P',
+                recordartucontrasena,
                 img,
                 google: true
             };
@@ -105,41 +106,42 @@ const googleSignin = async(req, res = response) => {
 
 }
 
-const forgotPassword = async (req, res = response) => {
+const forgotPassword = async (req, res = response ) => {
 
+    const sendEmail = require ('../helpers/nodemailer')
+    
 
-
-   const {correo} = req.body 
+   const {correo, recordartucontrasena} = req.body 
+   
    const usuario = await Usuario.findOne({correo})
+
 
    try {
     if (!usuario) {
-        res.status(400).json({
+        return res.status(400).json({
             message:'Intenta insertar un correo valido'
         })
        }
-
     
-        const token = await generarJWT( usuario.id );
+    if (recordartucontrasena!=usuario.recordartucontrasena){
+        return res.status(400).json({
+            message:'Palabra incorrecta'
+        })
+    }
 
-        const verificationlink = `http://localhost:8080/recoverPassword/${token}`
 
 
-        const info = await transporter.sendMail({
-            from: 'enzogiacoia@hotmail.com', // sender address
-            to: usuario, // list of receivers
-            subject: "forgotPassword ", // Subject line
-            html: `<b>Has click en este enlace para cambiar tu contraseña</b>
-            <a href="${verificationlink}"></a>
-            `, // html body
-          });
+       const token = await generarJWT( usuario.id );
+
+       sendEmail.sendEmail(correo)
+       
 
         
-    
+
+
+        
         res.status(200).json({
-         token,
-         verificationlink,
-         info
+         token
         })
    } catch (error) {
     res.status(400).json({
@@ -160,13 +162,18 @@ const forgotPassword = async (req, res = response) => {
 const recoverPassword = async (req, res = response) => {
 
     try {
+        
+
+        token = req.headers
+
+
         const {correo} = req.params
 
         let usuario = await Usuario.findOne({correo})
         
         const {password, repeatPassword} = req.body
     
-        const token = req.headers
+        
     
         if(!usuario) {
            return res.status(400).json('No existe un usuario con ese correo')
@@ -203,6 +210,9 @@ const recoverPassword = async (req, res = response) => {
       const salt = bcryptjs.genSaltSync();
       usuario.password = bcryptjs.hashSync( password, salt );
 
+
+
+    
       
     
       
@@ -212,6 +222,7 @@ const recoverPassword = async (req, res = response) => {
       res.status(200).json({
         usuario,
         msg:"Contraseña actualizada"
+        
       })
     
     } catch (error) {
