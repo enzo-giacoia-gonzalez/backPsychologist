@@ -17,9 +17,7 @@ const UsuarioSchema = Schema({
     },
 
     recordartucontrasena: {
-        type: String,
-        required: [true, 'La palabra clave es obligatoria'],
-        unique: true
+        type: String
     },
 
     img: {
@@ -29,16 +27,19 @@ const UsuarioSchema = Schema({
         type: String,
         required: true,
         default: 'USER_ROLE',
-        emun: ['ADMIN_ROLE', 'USER_ROLE']
+        enum: ['ADMIN_ROLE', 'USER_ROLE']
     },
     estado: {
         type: Boolean,
-        default: true
+        default: false
     },
     google: {
         type: Boolean,
         default: false
     },
+    code:{
+        type:String
+    }
 });
 
 

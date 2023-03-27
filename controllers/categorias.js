@@ -33,34 +33,46 @@ const obtenerCategoria = async(req, res = response ) => {
 
 const crearCategoria = async(req, res = response ) => {
 
-    const nombre = req.body.nombre.toUpperCase();
+    try {
+        const nombre = req.body.nombre.toUpperCase();
 
-    const categoriaDB = await Categoria.findOne({ nombre });
-
-    if ( categoriaDB ) {
-        return res.status(400).json({
-            msg: `La categoria ${ categoriaDB.nombre }, ya existe`
+        const categoriaDB = await Categoria.findOne({ nombre });
+    
+        if ( categoriaDB ) {
+            return res.status(400).json({
+                msg: `La categoria ${ categoriaDB.nombre }, ya existe`
+            });
+        }
+    
+        // Generar la data a guardar
+        const data = {
+            nombre,
+            usuario: req.usuario._id
+        }
+    
+        const categoria = new Categoria( data );
+    
+        // Guardar DB
+        await categoria.save();
+    
+        res.status(201).json({
+            msg:"Categoria Creada exitosamente",
+            categoria
         });
+    } catch (error) {
+        res.status(400).json({
+            msg:"Error al crear la categoria",
+            error
+        })
     }
-
-    // Generar la data a guardar
-    const data = {
-        nombre,
-        usuario: req.usuario._id
-    }
-
-    const categoria = new Categoria( data );
-
-    // Guardar DB
-    await categoria.save();
-
-    res.status(201).json(categoria);
+   
 
 }
 
 const actualizarCategoria = async( req, res = response ) => {
 
-    const { id } = req.params;
+    try {
+        const { id } = req.params;
     const { estado, usuario, ...data } = req.body;
 
     data.nombre  = data.nombre.toUpperCase();
@@ -68,16 +80,33 @@ const actualizarCategoria = async( req, res = response ) => {
 
     const categoria = await Categoria.findByIdAndUpdate(id, data, { new: true });
 
-    res.json( categoria );
+    res.status(200).json({ 
+        msg:"Categoria actualizada correctamente",
+        categoria 
+    });
 
+    } catch (error) {
+        res.status.json({
+            msg: "No se ha podido actualizar la categoria"
+        })
+    }
 }
 
 const borrarCategoria = async(req, res = response ) => {
 
-    const { id } = req.params;
+    try {
+        const { id } = req.params;
     const categoriaBorrada = await Categoria.findByIdAndUpdate( id, { estado: false }, {new: true });
 
-    res.json( categoriaBorrada );
+    res.status(200).json({
+        msg:"Categoria borrada Exitosamente",
+        categoriaBorrada
+    });
+    } catch (error) {
+        res.status(400).json({
+            msg:"Error al borrar la categoria"
+        })
+    }
 }
 
 

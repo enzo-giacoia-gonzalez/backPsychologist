@@ -4,7 +4,7 @@ const { Producto } = require('../models');
 
 const obtenerProductos = async(req, res = response ) => {
 
-    const { limite = 5, desde = 0 } = req.query;
+    const { limite = 0, desde = 0 } = req.query;
     const query = { estado: true };
 
     const [ total, productos ] = await Promise.all([
@@ -35,7 +35,8 @@ const obtenerProducto = async(req, res = response ) => {
 
 const crearProducto = async(req, res = response ) => {
 
-    const { estado, usuario, ...body } = req.body;
+    try {
+        const { estado, usuario, ...body } = req.body;
 
     const productoDB = await Producto.findOne({ nombre: body.nombre });
 
@@ -57,26 +58,51 @@ const crearProducto = async(req, res = response ) => {
     // Guardar DB
     await producto.save();
 
-    res.status(201).json(producto);
+    res.status(201).json({
+        producto,
+        msg:"Producto creado exitosamente"
+    });
+    } catch (error) {
+       res.status(400).json({
+        msg:"Error al crear el producto"
+       }) 
+    }
+
+    
 
 }
 
 const actualizarProducto = async( req, res = response ) => {
 
-    const { id } = req.params;
-    const { estado, usuario, ...data } = req.body;
+    try {
+        const { id } = req.params;
+        const { estado, usuario, ...data } = req.body;
 
-    if( data.nombre ) {
-        data.nombre  = data.nombre.toUpperCase();
+        if(!data.precio || !data.nombre || !data.descripcion || !data.categoria) {
+            return res.status(400).json({
+                msg: 'los campos nombre, precio, descripcion y categoria no pueden estar vacios'
+            })
+        }
+    
+        if( data.nombre ) {
+            data.nombre  = data.nombre.toUpperCase();
+        }
+    
+        data.usuario = req.usuario._id;
+    
+        const producto = await Producto.findByIdAndUpdate(id, data, { new: true });
+    
+        return res.status(200).json({
+            producto,
+            msg:'Producto editado correctamente'
+        });
+        
+
+    } catch (error) {
+        return res.status(400).json({msg:'Error al crear el usuario'})
     }
-
-    data.usuario = req.usuario._id;
-
-    const producto = await Producto.findByIdAndUpdate(id, data, { new: true });
-
-    res.json( producto );
-
 }
+   
 
 const borrarProducto = async(req, res = response ) => {
 

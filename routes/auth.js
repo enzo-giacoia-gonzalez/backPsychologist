@@ -16,7 +16,7 @@ router.post('/login',[
     validarlogin,
     check('correo', 'El correo es obligatorio').isEmail(),
     check('password', 'La contraseña es obligatoria').not().isEmpty(),
-    validarCampos
+    validarCampos,
 ],login );
 
 router.post('/google',[
@@ -25,10 +25,11 @@ router.post('/google',[
     validarCampos
 ], googleSignin );
 
-router.put('/forgotPassword', forgotPassword );
+router.put('/forgotPassword',
+forgotPassword );
 
-router.put('/recoverPassword/:correo',[
-validarJWT
+
+router.put('/recoverPassword/:token' ,[
 ], recoverPassword);
 
 

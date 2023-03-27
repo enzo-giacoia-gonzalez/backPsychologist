@@ -30,6 +30,7 @@ router.get('/:id',[
 // Crear categoria - privado - cualquier persona con un token válido
 router.post('/', [ 
     validarJWT,
+    esAdminRole,
     check('nombre','El nombre es obligatorio').not().isEmpty(),
     check('categoria','No es un id de Mongo').isMongoId(),
     check('categoria').custom( existeCategoriaPorId ),
@@ -39,6 +40,7 @@ router.post('/', [
 // Actualizar - privado - cualquiera con token válido
 router.put('/:id',[
     validarJWT,
+    esAdminRole,
     // check('categoria','No es un id de Mongo').isMongoId(),
     check('id').custom( existeProductoPorId ),
     validarCampos

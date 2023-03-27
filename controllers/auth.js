@@ -5,7 +5,8 @@ const Usuario = require('../models/usuario');
 
 const { generarJWT } = require('../helpers/generar-jwt');
 const { googleVerify } = require('../helpers/google-verify');
-const transporter = require ('../helpers/nodemailer')
+const{ sendEmailreset} = require('../helpers/nodemailer')
+const {getToken, getTokenData} = require ('../helpers/genandverify-jwt')
 
 
 const login = async(req , res = response) => {
@@ -40,9 +41,10 @@ const login = async(req , res = response) => {
         // Generar el JWT
         const token = await generarJWT( usuario.id );
 
-        res.json({
-            usuario,
-            token
+        res.status(200).json({
+            msg:"Usuario creado exitosamente",
+            token,
+            usuario
         })
 
     } catch (error) {
@@ -108,12 +110,13 @@ const googleSignin = async(req, res = response) => {
 
 const forgotPassword = async (req, res = response ) => {
 
-    const sendEmail = require ('../helpers/nodemailer')
     
 
    const {correo, recordartucontrasena} = req.body 
    
    const usuario = await Usuario.findOne({correo})
+
+   const token = getToken({ correo })
 
 
    try {
@@ -125,18 +128,15 @@ const forgotPassword = async (req, res = response ) => {
     
     if (recordartucontrasena!=usuario.recordartucontrasena){
         return res.status(400).json({
-            message:'Palabra incorrecta'
+            message:'Palabra incorrecta / recordar codigo para reestablecer contraseña es necesario'
         })
     }
 
 
-
-       const token = await generarJWT( usuario.id );
-
-       sendEmail.sendEmail(correo)
+       await sendEmailreset(correo, token)
        
-
-        
+       
+       
 
 
         
@@ -163,27 +163,39 @@ const recoverPassword = async (req, res = response) => {
 
     try {
         
+        const {token} = req.params
 
-        token = req.headers
+        const data = await getTokenData(token);
 
-
-        const {correo} = req.params
-
-        let usuario = await Usuario.findOne({correo})
-        
         const {password, repeatPassword} = req.body
-    
+
         
-    
-        if(!usuario) {
-           return res.status(400).json('No existe un usuario con ese correo')
+
+
+
+        if(data === null) {
+            return res.json({
+                success: false,
+                msg: 'Error al obtener data'
+            });
+       }
+         
+        
+       const { correo } = data.data;
+
+       
+        // Verificar existencia del usuario
+        const usuario = await Usuario.findOne({ correo }) || null;
+ 
+        if(usuario === null) {
+             return res.json({
+                 success: false,
+                 msg: 'Usuario no existe'
+             });
         }
     
     
-        if(!token) {
-            return res.status(400).json('No hay token')
-        }
-    
+
         
     
        if (password!=repeatPassword){
@@ -210,24 +222,22 @@ const recoverPassword = async (req, res = response) => {
       const salt = bcryptjs.genSaltSync();
       usuario.password = bcryptjs.hashSync( password, salt );
 
-
-
-    
       
-    
-      
-
+         
       await usuario.save();
+         
+      
     
-      res.status(200).json({
-        usuario,
-        msg:"Contraseña actualizada"
-        
+      res.json({
+        usuario
       })
+
+
+    
     
     } catch (error) {
         res.status(401).json({
-            msg:error
+            msg:'Hubo en error consulte con el administrador'
         })
     }
 

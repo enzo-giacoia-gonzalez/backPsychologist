@@ -10,9 +10,11 @@ const {
 } = require('../middlewares');
 
 
+
 const { esRoleValido, emailExiste, emailExistePut, existeUsuarioPorId, emailCorrecto } = require('../helpers/db-validators');
 
 const { usuariosGet,
+        usuarioConfirm,
         usuariosPut,
         usuariosPost,
         usuariosDelete,
@@ -23,11 +25,18 @@ const router = Router();
 
 router.get('/', usuariosGet );
 
+router.get(
+    '/confirm/:token',
+    [],
+    usuarioConfirm
+    
+);
+
 router.put('/:id',[
     check('id', 'No es un ID válido').isMongoId(),
     check('correo').custom( emailExiste ),
     check('id').custom( existeUsuarioPorId ),
-    check('rol').custom( esRoleValido ), 
+    //check('rol').custom( esRoleValido ), 
     validarCampos
 ],usuariosPut );
 
@@ -35,11 +44,13 @@ router.post('/',[
     check('nombre', 'El nombre es obligatorio').not().isEmpty(),
     check('password', 'El password debe de ser más de 6 letras').isLength({ min: 6 }),
     check('correo', 'El correo no es válido').isEmail(),
+    check('recordartucontrasena', 'Intenta ingresar un dato valido').not().isEmpty(),
     check('correo').custom( emailExiste ),
     check('recordartucontrasena', 'Esta palabra es obligatoria').not().isEmpty(),
     // check('rol', 'No es un rol válido').isIn(['ADMIN_ROLE','USER_ROLE']),
-    check('rol').custom( esRoleValido ), 
-    validarCampos
+    //check('rol').custom( esRoleValido ), 
+    validarCampos,
+
 ], usuariosPost );
 
 router.delete('/:id',[
