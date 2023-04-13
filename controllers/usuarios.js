@@ -28,6 +28,22 @@ const usuariosGet = async(req = request, res = response) => {
     });
 }
 
+const usuarioGetId = async (req = request, res = response) => {
+    try {
+        const {id} = req.params
+        const usuario = await Usuario.findById(id)
+    
+        res.status(200).json({
+            usuario
+        })
+    } catch (error) {
+        res.status(400).json({
+            msg:"La id no es valida"
+        })
+    }
+   
+}
+
 
 const usuariosPost = async(req, res = response) => {
 
@@ -57,7 +73,7 @@ const usuariosPost = async(req, res = response) => {
         return res.status(200).json({
             usuario,
             success: true,
-            msg: 'Registrado correctamente'
+            msg: 'Registrado correctamente, verifique su casilla de email para confirmar'
         });
     } catch (error) {
         return res.status(400).json({
@@ -186,17 +202,26 @@ const usuariosPatch = (req, res = response) => {
 
 const usuariosDelete = async(req, res = response) => {
 
-    const { id } = req.params;
-    const token = req.headers
-
-    if(!token) {
-        res.status.json('No hay token')
-    }
-
-    const usuario = await Usuario.findByIdAndUpdate( id, { estado: false } );
-
+    try {
+        const { id } = req.params;
+        const token = req.headers
     
-    res.json(usuario);
+        if(!token) {
+            res.status.json('No hay token')
+        }
+    
+        const usuario = await Usuario.findByIdAndUpdate( id, { estado: false } );
+    
+        
+        res.status(200).json({
+            msg:"Usuario borrado",
+            usuario
+        });
+    } catch (error) {
+        res.status(400).json({
+            msg:"No hay sido posible borrar el usuario"
+        })
+    }
 }
 
 
@@ -204,6 +229,7 @@ const usuariosDelete = async(req, res = response) => {
 
 module.exports = {
     usuariosGet,
+    usuarioGetId,
     usuariosPost,
     usuarioConfirm,
     usuariosPut,

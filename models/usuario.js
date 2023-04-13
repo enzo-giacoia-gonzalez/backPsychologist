@@ -17,7 +17,8 @@ const UsuarioSchema = Schema({
     },
 
     recordartucontrasena: {
-        type: String
+        type: String,
+        required: true
     },
 
     img: {

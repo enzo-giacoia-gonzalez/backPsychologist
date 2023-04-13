@@ -105,11 +105,28 @@ const actualizarProducto = async( req, res = response ) => {
    
 
 const borrarProducto = async(req, res = response ) => {
+    try {
 
-    const { id } = req.params;
+        const { id } = req.params;
+
+        const producto = await Producto.findById(id)
+
+        if (producto.estado === false) {
+            return res.status(400).json({
+                msg: "Este producto ya ha sido borrado"
+            })
+        }
     const productoBorrado = await Producto.findByIdAndUpdate( id, { estado: false }, {new: true });
 
-    res.json( productoBorrado );
+    return res.status(200).json({
+        msg:"Producto eliminado Exitosamente",
+        productoBorrado
+    })
+    } catch (error) {
+        res.status(400).json({
+            msg: "Error al eliminar consulte al administrador"
+        })
+    }
 }
 
 

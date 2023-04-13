@@ -20,16 +20,16 @@ const validarlogin = async( req = request, res = response, next ) => {
         
 
         if( !usuariocorreo) {
-            return res.status(401).json({
-                msg: 'algo fallo intentalo nuevamente'
+            return res.status(400).json({
+                msg: 'Usuario no existe'
             })
         }
 
         const validPassword = bcryptjs.compareSync(password, usuariocorreo.password);
         // Verificar si el uid tiene estado true
         if (!validPassword) {
-            return res.status(401).json({
-                msg: 'algo fallo intentalo nuevamente'
+            return res.status(400).json({
+                msg: 'Contraseña o usuario incorrectos'
             })
         }
 
@@ -44,7 +44,7 @@ const validarlogin = async( req = request, res = response, next ) => {
 
         console.log(error);
         res.status(401).json({
-            msg: 'Token no válido'
+            msg: 'error'
         })
     }
 

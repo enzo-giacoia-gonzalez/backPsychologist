@@ -118,7 +118,7 @@ sendEmailreset = async (correo = correo, token = token) => {
     from:'enzogiacoia@hotmail.com',
     to:correo,
     subject:'Envio de correo',
-    text:`Reestrablesca su contraseña ingresando al siguiente link http://localhost:8080/api/auth/recoverPassword/${token}`
+    text:`Reestrablesca su contraseña ingresando al siguiente link http://localhost:3000/resetpassword/${token}`
   }
 
 

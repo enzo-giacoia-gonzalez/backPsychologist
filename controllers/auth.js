@@ -42,7 +42,7 @@ const login = async(req , res = response) => {
         const token = await generarJWT( usuario.id );
 
         res.status(200).json({
-            msg:"Usuario creado exitosamente",
+            msg:"Te has logeado correctamente",
             token,
             usuario
         })
@@ -109,46 +109,55 @@ const googleSignin = async(req, res = response) => {
 }
 
 const forgotPassword = async (req, res = response ) => {
+try {
+    const {correo, recordartucontrasena} = req.body 
 
-    
+    console.log(recordartucontrasena)
 
-   const {correo, recordartucontrasena} = req.body 
    
-   const usuario = await Usuario.findOne({correo})
+   
 
-   const token = getToken({ correo })
-
-
-   try {
-    if (!usuario) {
-        return res.status(400).json({
-            message:'Intenta insertar un correo valido'
-        })
-       }
+    const usuario = await Usuario.findOne({correo})
+ 
+    const token = await generarJWT( usuario.id )
+ 
+ 
     
-    if (recordartucontrasena!=usuario.recordartucontrasena){
-        return res.status(400).json({
-            message:'Palabra incorrecta / recordar codigo para reestablecer contraseña es necesario'
-        })
-    }
-
-
-       await sendEmailreset(correo, token)
-       
-       
-       
-
-
+     if (!usuario) {
+         return res.status(400).json({
+             message:'Intenta insertar un correo valido'
+         })
+        }
+     
+     if (recordartucontrasena!=usuario.recordartucontrasena){
+         return res.status(400).json({
+             message:'Palabra incorrecta / recordar codigo para reestablecer contraseña es necesario'
+         })
+     }
+ 
+ 
+        await sendEmailreset(correo, token)
         
-        res.status(200).json({
-         token
-        })
-   } catch (error) {
+        
+        
+ 
+ 
+         
+         res.status(200).json({
+             msg:"Email de reestablecimiento enviado correctamente",
+            token
+         })
+} catch (error) {
     res.status(400).json({
+        msg:"Error al enviar el correo",
         error
     })
+}
+    
+
+  
    
-   }
+   
 
 
    
@@ -163,38 +172,25 @@ const recoverPassword = async (req, res = response) => {
 
     try {
         
-        const {token} = req.params
+        const token = req.params.token;
 
-        const data = await getTokenData(token);
+        const id = req.usuario._id
+
+        console.log(req.usuario)
 
         const {password, repeatPassword} = req.body
 
         
+        const usuario = await Usuario.findById(id)
 
 
-
-        if(data === null) {
-            return res.json({
+        if(!token) {
+            return res.status(400).json({
                 success: false,
                 msg: 'Error al obtener data'
             });
        }
          
-        
-       const { correo } = data.data;
-
-       
-        // Verificar existencia del usuario
-        const usuario = await Usuario.findOne({ correo }) || null;
- 
-        if(usuario === null) {
-             return res.json({
-                 success: false,
-                 msg: 'Usuario no existe'
-             });
-        }
-    
-    
 
         
     
@@ -228,7 +224,8 @@ const recoverPassword = async (req, res = response) => {
          
       
     
-      res.json({
+      res.status(200).json({
+        msg:"Contraseña Reestablecidad correctamente",
         usuario
       })
 
@@ -253,9 +250,116 @@ const recoverPassword = async (req, res = response) => {
 }
 
 
+
+
+
+
+
+const recoverPasswordInProfile = async (req, res = response) => {
+
+    try {
+        
+        const token = req.headers
+
+        const {id} = req.params
+
+        const {password, repeatPassword} = req.body
+
+        
+
+
+
+        if(!token ) {
+            return res.status(400).json({
+                success: false,
+                msg: 'No se puede modificar la contraseña - token invalido '
+            });
+       }
+         
+        
+      
+
+       const usuario = await Usuario.findById(id)
+ 
+        if(!usuario) {
+             return res.status(400).json({
+                 success: false,
+                 msg: 'Usuario no existe'
+             });
+        }
+
+        if (usuario.estado === false) {
+            return res.status(400).json({
+                msg: "Usuario deshabilitado"
+            })
+        }
+    
+    
+
+        
+    
+       if (password!=repeatPassword){
+        return res.status(400).json('Contraseñas no coinciden')
+       }
+
+    
+       if (password===usuario.password){
+        return res.status(400).json('Contraseña usada Anteriormente intenta usar otra')
+       }
+      
+       console.log(usuario.password)
+       const validPassword = bcryptjs.compareSync( password, usuario.password );
+       if ( validPassword ) {
+           return res.status(400).json({
+               msg: 'Contraseña usada anteriormente intenta usar otra'
+           });
+       }
+    
+       
+    
+       
+       
+      const salt = bcryptjs.genSaltSync();
+      usuario.password = bcryptjs.hashSync( password, salt );
+
+      
+         
+      await usuario.save();
+         
+      
+    
+      return res.status(200).json({
+        msg:"Contraseña actualizada Correctamente",
+        usuario
+
+      })
+
+
+    
+    
+    } catch (error) {
+        console.log(error)
+        res.status(401).json({
+            msg:'Hubo en error consulte con el administrador'
+        })
+    }
+
+   
+
+
+
+    
+
+    // Guardar en BD
+
+
+}
+
+
 module.exports = {
     login,
     googleSignin,
     forgotPassword,
-    recoverPassword
+    recoverPassword,
+    recoverPasswordInProfile
 }

@@ -14,6 +14,7 @@ const {
 const { esRoleValido, emailExiste, emailExistePut, existeUsuarioPorId, emailCorrecto } = require('../helpers/db-validators');
 
 const { usuariosGet,
+        usuarioGetId,
         usuarioConfirm,
         usuariosPut,
         usuariosPost,
@@ -24,6 +25,8 @@ const router = Router();
 
 
 router.get('/', usuariosGet );
+
+router.get('/:id', usuarioGetId);
 
 router.get(
     '/confirm/:token',

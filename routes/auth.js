@@ -5,7 +5,7 @@ const { check } = require('express-validator');
 const { validarCampos } = require('../middlewares/validar-campos');
 
 
-const { login, googleSignin, forgotPassword, recoverPassword } = require('../controllers/auth');
+const { login, googleSignin, forgotPassword, recoverPassword, recoverPasswordInProfile } = require('../controllers/auth');
 const { validarlogin } = require('../middlewares/validar-login');
 const { validarJWT } = require('../middlewares');
 
@@ -29,9 +29,14 @@ router.put('/forgotPassword',
 forgotPassword );
 
 
-router.put('/recoverPassword/:token' ,[
+router.put('/recoverPasswordToken/:token' ,[
+    validarJWT
 ], recoverPassword);
 
+
+router.put('/recoverPassword/:id' ,[
+    validarJWT
+], recoverPasswordInProfile);
 
 
 module.exports = router;

@@ -1,5 +1,6 @@
 const { response } = require('express');
 const { Categoria } = require('../models');
+const { findById, findOne } = require('../models/role');
 
 
 const obtenerCategorias = async(req, res = response ) => {
@@ -78,6 +79,15 @@ const actualizarCategoria = async( req, res = response ) => {
     data.nombre  = data.nombre.toUpperCase();
     data.usuario = req.usuario._id;
 
+    const CategoriaEstado = await Categoria.findById(id)
+
+    if(CategoriaEstado.estado === false) {
+        return res.status(400).json({
+            msg:"La categoria ha sido eliminada no es posible editar"
+        })
+    }
+
+
     const categoria = await Categoria.findByIdAndUpdate(id, data, { new: true });
 
     res.status(200).json({ 
@@ -86,7 +96,7 @@ const actualizarCategoria = async( req, res = response ) => {
     });
 
     } catch (error) {
-        res.status.json({
+        res.status(400).json({
             msg: "No se ha podido actualizar la categoria"
         })
     }
