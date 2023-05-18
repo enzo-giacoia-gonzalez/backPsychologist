@@ -5,7 +5,7 @@ const { Producto } = require('../models');
 const obtenerProductos = async(req, res = response ) => {
 
     const { limite = 0, desde = 0 } = req.query;
-    const query = { estado: true };
+    const query = { estado: true, disponible: {$gt:0} };
 
     const [ total, productos ] = await Promise.all([
         Producto.countDocuments(query),
@@ -99,7 +99,7 @@ const actualizarProducto = async( req, res = response ) => {
         
 
     } catch (error) {
-        return res.status(400).json({msg:'Error al crear el usuario'})
+        return res.status(400).json({msg:'Error al crear el producto'})
     }
 }
    

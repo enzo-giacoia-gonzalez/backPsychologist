@@ -1,4 +1,8 @@
 const { response } = require('express');
+var mercadopago = require('mercadopago');
+mercadopago.configurations.setAccessToken(
+ 'TEST-6121932480493916-041316-e48c71ffa07f76bd23b3e45080271e78-202778498'
+);
 const {Cart, Producto, Usuario, CartItem } = require('../models');
 const cartItem = require('../models/cartItem');
 
@@ -115,9 +119,24 @@ const  putProductCart = async (req, res = response) => {
         const {id} = req.params
         const usuario = req.usuario._id
 
+        const producto = await Producto.findById(id)
+
         let usuarioIncart = await Cart.findOne({usuario})
 
         const ProductExist = usuarioIncart.items.find((item)=>item._id == id)
+
+        if (producto.disponible<1) {
+            return res.status(400).json({
+                msg: 'No hay stock'
+            })
+        }
+
+        if (producto.disponible<=ProductExist.quantity) {
+            return res.status(400).json({
+                msg: 'No hay stock'
+            })
+        }
+
 
         if (!ProductExist) {
             res.status(400).json({
@@ -266,14 +285,62 @@ const deleteProduct = async (req, res) => {
             msg: error
         })
     }
-
-
 }
+
+const ProductinCartEdited = async (req, res) => {
+    try {
+        const usuario = req.usuario._id
+
+ const productIncart = await Cart.findOne({usuario})
+
+ 
+
+ for (const product of productIncart.items) {
+    const producto = await Producto.findById(product._id)
+    const ProductIncartActualizado = await Producto.findByIdAndUpdate(product._id, {disponible: producto.disponible-product.quantity})
+ }
+
+const productIncartEliminado = await Cart.findOneAndDelete({usuario})
+
+res.status(200).json({
+    productIncartEliminado
+})
+    } catch (error) {
+        
+    }
+ 
+
+
+    }
+
+    const purchaseCartItems = (req, res) => {
+mercadopago.payment.save(req.body)
+.then(function(response) {
+  const { status, status_detail, id } = response.body;
+//   console.log(response.body)
+  res.status(200).json({status, status_detail, id});
+})
+.catch(function(error) {
+  console.error(error);
+});
+
+     
+        //   const { status, status_detail, id } = response.body;
+        //   res.status(200).json({msg: "pago exitoso", status, status_detail, id });
+
+       
+        }
+        
+        
+    
+   
 
 module.exports = {
     getProductCartId,
     getProductCart,
     addProductCart,
     putProductCart,
-    deleteProduct
+    deleteProduct,
+    ProductinCartEdited,
+    purchaseCartItems,
 }

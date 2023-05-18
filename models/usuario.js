@@ -40,7 +40,12 @@ const UsuarioSchema = Schema({
     },
     code:{
         type:String
+    },
+
+    historyPayments : {
+        type: Array,
     }
+        
 });
 
 

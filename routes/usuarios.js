@@ -19,14 +19,19 @@ const { usuariosGet,
         usuariosPut,
         usuariosPost,
         usuariosDelete,
-        usuariosPatch } = require('../controllers/usuarios');
+        usuariosPatch, 
+        historyPayments} = require('../controllers/usuarios');
 
 const router = Router();
 
 
 router.get('/', usuariosGet );
 
-router.get('/:id', usuarioGetId);
+router.get('/:id',[
+    validarJWT,
+    validarCampos
+],
+ usuarioGetId);
 
 router.get(
     '/confirm/:token',
@@ -55,6 +60,11 @@ router.post('/',[
     validarCampos,
 
 ], usuariosPost );
+
+router.post('/history/payments', [
+    validarJWT,
+    validarCampos
+], historyPayments)
 
 router.delete('/:id',[
     validarJWT,

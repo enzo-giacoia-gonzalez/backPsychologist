@@ -6,6 +6,7 @@ const router = Router();
 
 router.get('/:coleccion/:termino', buscar )
 
+router.get('/:coleccion', buscar )
 
 
 
