@@ -9,11 +9,12 @@ const genandverify = require ('./genandverify-jwt')
 
 
 
+
 module.exports = {
     ...dbValidators,
     ...generarJWT,
     ...googleVerify,
     ...subirArchivo,
     ...nodemailer,
-    ...genandverify
+    ...genandverify,
 }

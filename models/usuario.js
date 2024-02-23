@@ -20,15 +20,17 @@ const UsuarioSchema = Schema({
         type: String,
         required: true
     },
-
-    img: {
+    video: {
         type: String,
+    },
+    img:{
+        type:String,
     },
     rol: {
         type: String,
         required: true,
         default: 'USER_ROLE',
-        enum: ['ADMIN_ROLE', 'USER_ROLE']
+        enum: ['ADMIN_ROLE', 'USER_ROLE','PATIENT_ROLE']
     },
     estado: {
         type: Boolean,

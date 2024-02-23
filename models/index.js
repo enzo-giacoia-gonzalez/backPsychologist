@@ -1,22 +1,23 @@
 
 
-const Categoria = require('./categoria');
-const Producto = require('./producto');
+const Video = require('./video');
+const Comprobante = require ('./comprobante')
 const Role = require('./role');
 const Server = require('./server');
+const Turno = require ('./turno')
 const Usuario = require('./usuario');
-const Cart = require ('./cart')
-const CartItem = require('./cartItem')
+
 
 
 
 module.exports = {
-    Categoria,
-    Producto,
+ 
+   
+    Comprobante,
     Role,
     Server,
+    Turno,
     Usuario,
-    Cart,
-    CartItem
+    Video,
 }
 

@@ -23,6 +23,22 @@ const usuariosGet = async (req = request, res = response) => {
   });
 };
 
+const usuarioGetCorreo = async (req = request, res = response) => {
+  try {
+    const { correo } = req.params;
+    const usuario = await Usuario.findOne({correo});
+
+    res.status(200).json({
+      usuario,
+    });
+  } catch (error) {
+    res.status(400).json({
+      msg: "El correo no es valido",
+    });
+  }
+};
+
+
 const usuarioGetId = async (req = request, res = response) => {
   try {
     const { id } = req.params;
@@ -94,8 +110,6 @@ const historyPayments = async (req, res) => {
     usuario.historyPayments.push(historyPayments);
 
     usuario.markModified("historyPayments");
-
-    console.log(usuario.historyPayments);
 
     await usuario.save();
 
@@ -235,6 +249,7 @@ const usuariosDelete = async (req, res = response) => {
 module.exports = {
   usuariosGet,
   usuarioGetId,
+  usuarioGetCorreo,
   usuariosPost,
   historyPayments,
   usuarioConfirm,

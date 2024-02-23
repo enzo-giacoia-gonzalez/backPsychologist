@@ -19,7 +19,8 @@ const { usuariosGet,
         usuariosPost,
         usuariosDelete,
         usuariosPatch, 
-        historyPayments} = require('../controllers/usuarios');
+        historyPayments,
+        usuarioGetCorreo} = require('../controllers/usuarios');
 
 const router = Router();
 
@@ -34,7 +35,11 @@ router.get('/:id',[
 ],
 usuarioGetId);
 
-console.log("Chocolate")
+router.get('/correo/:correo',[
+    validarJWT,
+    validarCampos
+],
+usuarioGetCorreo);
 
 router.get(
     '/confirm/:token',

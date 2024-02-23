@@ -3,73 +3,57 @@ const fs = require("fs");
 const cloudinary = require("cloudinary").v2;
 cloudinary.config(process.env.CLOUDINARY_URL);
 const { response } = require("express");
-const { subirArchivo } = require("../helpers");
 
-const { Usuario, Producto } = require("../models");
+const { Usuario, Video, Turno } = require("../models");
 const { firebaseConfig } = require("../database/config");
 
-const cargarArchivo = async (req, res = response) => {
+
+const CargarImagenCloudinary = async (req, res = response) => {
   try {
-    // txt, md
-    // const nombre = await subirArchivo( req.files, ['txt','md'], 'textos' );
-    const nombre = await subirArchivo(req.files, undefined, "imgs");
-    res.json({ nombre });
-  } catch (msg) {
-    res.status(400).json({ msg });
-  }
-};
-
-const actualizarImagen = async (req, res = response) => {
-  const { id, coleccion } = req.params;
-
-  let modelo;
+    const { coleccion } = req.params;
 
   switch (coleccion) {
     case "usuarios":
-      modelo = await Usuario.findById(id);
-      if (!modelo) {
+      if (!coleccion) {
         return res.status(400).json({
-          msg: `No existe un usuario con el id ${id}`,
+          msg: `Manda una coleccion correcta`,
         });
       }
-
-      break;
-
-    case "productos":
-      modelo = await Producto.findById(id);
-      if (!modelo) {
+    case "videos":
+      if (!coleccion) {
         return res.status(400).json({
-          msg: `No existe un producto con el id ${id}`,
+          msg: `Manda una coleccion correcta`,
         });
       }
-
+      case "turnos":
+      if (!coleccion) {
+        return res.status(400).json({
+          msg: `Manda una coleccion correcta`,
+        });
+      }
       break;
 
     default:
       return res.status(500).json({ msg: "Se me olvidó validar esto" });
   }
 
-  // Limpiar imágenes previas
-  if (modelo.img) {
-    // Hay que borrar la imagen del servidor
-    const pathImagen = path.join(
-      __dirname,
-      "../uploads",
-      coleccion,
-      modelo.img
-    );
-    if (fs.existsSync(pathImagen)) {
-      fs.unlinkSync(pathImagen);
-    }
+  //subir imagen
+  const { tempFilePath } = req.files.archivo;
+  const { secure_url } = await cloudinary.uploader.upload(tempFilePath);
+  const img = secure_url;
+
+  res.status(200).json({
+    msg: "Imagen cargada Correctamente",
+    img
+  });
+  } catch (error) {
+    res.status(400).json({
+      msg:error
+    })
   }
-
-  const nombre = await subirArchivo(req.files, undefined, coleccion);
-  modelo.img = nombre;
-
-  await modelo.save();
-
-  res.json(modelo);
+  
 };
+
 
 const actualizarImagenCloudinary = async (req, res = response) => {
   const { id, coleccion } = req.params;
@@ -87,15 +71,25 @@ const actualizarImagenCloudinary = async (req, res = response) => {
 
       break;
 
-    case "productos":
-      modelo = await Producto.findById(id);
+    case "videos":
+      modelo = await Video.findById(id);
       if (!modelo) {
         return res.status(400).json({
-          msg: `No existe un producto con el id ${id}`,
+          msg: `No existe un video con el id ${id}`,
         });
       }
 
       break;
+
+      case "turnos":
+        modelo = await Turno.findById(id);
+        if (!modelo) {
+          return res.status(400).json({
+            msg: `No existe un video con el id ${id}`,
+          });
+        }
+  
+        break;
 
     default:
       return res.status(500).json({ msg: "Se me olvidó validar esto" });
@@ -116,18 +110,91 @@ const actualizarImagenCloudinary = async (req, res = response) => {
   await modelo.save();
 
   res.status(200).json({
-    msg:"Imagen cargada Correctamente",
-    modelo
-});
+    msg: "Imagen cargada Correctamente",
+    modelo,
+  });
+};
+
+//borrar imagen
+const borrarImagen = async (req, res) => {
+  try {
+    const { coleccion, id } = req.params;
+
+    let modelo;
+
+    switch (coleccion) {
+      case "usuarios":
+        modelo = await Usuario.findById(id);
+        if (!modelo) {
+          return res.status(400).json({
+            msg: `No existe un usuario con el id ${id}`,
+          });
+        }
+
+        break;
+
+      case "videos":
+        modelo = await Video.findById(id);
+        if (!modelo) {
+          return res.status(400).json({
+            msg: `No existe un video con el id ${id}`,
+          });
+        }
+
+        break;
+
+        case "turnos":
+        modelo = await Turno.findById(id);
+        if (!modelo) {
+          return res.status(400).json({
+            msg: `No existe un video con el id ${id}`,
+          });
+        }
+
+        break;
+
+      default:
+        return res.status(500).json({ msg: "Se me olvidó validar esto" });
+    }
+
+    if (modelo.img) {
+      const nombreArr = modelo.img.split("/");
+      const nombre = nombreArr[nombreArr.length - 1];
+      const [public_id] = nombre.split(".");
+      cloudinary.uploader.destroy(public_id);
+      modelo.img = "";
+      modelo.save();
+    }
+
+    res.status(200).json({
+      msg: "Eliminado Correctamente",
+      modelo,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      msg: "Error al eliminar el usuario",
+    });
+  }
 };
 
 
-const CargarImagenCloudinary = async (req, res = response) => {
-  const { coleccion } = req.params;
 
+const CargarVideoCloudinary = async (req, res = response) => {
+  try {
+    const { coleccion } = req.params;
 
   switch (coleccion) {
-    case "productos":
+    case "usuarios":
+      if (!coleccion) {
+        return res.status(400).json({
+          msg: `Manda una coleccion correcta`,
+        });
+      }
+
+      break;
+
+    case "videos":
       if (!coleccion) {
         return res.status(400).json({
           msg: `Manda una coleccion correcta`,
@@ -140,80 +207,30 @@ const CargarImagenCloudinary = async (req, res = response) => {
       return res.status(500).json({ msg: "Se me olvidó validar esto" });
   }
 
-//subir imagen
+  //subir imagen
   const { tempFilePath } = req.files.archivo;
-  const { secure_url } = await cloudinary.uploader.upload(tempFilePath);
-  const img = secure_url;
-
+  const result = await cloudinary.uploader.upload(tempFilePath, {
+    resource_type: "video",
+  });
+  const video = result.secure_url;
+ 
 
   res.status(200).json({
-    msg:"Imagen cargada Correctamente",
-    img
-});
+    msg: "Imagen cargada Correctamente",
+    video,
+  });
+  } catch (error) {
+    res.status(400).json(
+      error
+    )
+  }
+  
 };
 
 
 
 
-
-//borrar imagen
-const borrarImagen = async (req, res) => {
-
-  try {
-    const {coleccion, id} = req.params
-
-  let modelo;
-
-  switch (coleccion) {
-    case "usuarios":
-      modelo = await Usuario.findById(id);
-      if (!modelo) {
-        return res.status(400).json({
-          msg: `No existe un usuario con el id ${id}`,
-        });
-      }
-
-      break;
-
-    case "productos":
-      modelo = await Producto.findById(id);
-      if (!modelo) {
-        return res.status(400).json({
-          msg: `No existe un producto con el id ${id}`,
-        });
-      }
-
-      break;
-
-    default:
-      return res.status(500).json({ msg: "Se me olvidó validar esto" });
-  }
-
-  if (modelo.img) {
-    const nombreArr = modelo.img.split("/");
-    const nombre = nombreArr[nombreArr.length - 1];
-    const [public_id] = nombre.split(".");
-    cloudinary.uploader.destroy(public_id);
-    modelo.img = ""
-    modelo.save()
-  }
-
-  res.status(200).json({
-    msg: "Eliminado Correctamente",
-    modelo
-  })
-  } catch (error) {
-    console.log(error)
-    res.status(400).json({
-      msg: "Error al eliminar el usuario"
-    })
-  }
-  
-
-}
-
-
-const mostrarImagen = async (req, res = response) => {
+const actualizarVideoCloudinary = async (req, res = response) => {
   const { id, coleccion } = req.params;
 
   let modelo;
@@ -229,11 +246,11 @@ const mostrarImagen = async (req, res = response) => {
 
       break;
 
-    case "productos":
-      modelo = await Producto.findById(id);
+    case "videos":
+      modelo = await Video.findById(id);
       if (!modelo) {
         return res.status(400).json({
-          msg: `No existe un producto con el id ${id}`,
+          msg: `No existe un video con el id ${id}`,
         });
       }
 
@@ -244,29 +261,86 @@ const mostrarImagen = async (req, res = response) => {
   }
 
   // Limpiar imágenes previas
-  if (modelo.img) {
-    // Hay que borrar la imagen del servidor
-    const pathImagen = path.join(
-      __dirname,
-      "../uploads",
-      coleccion,
-      modelo.img
-    );
-    if (fs.existsSync(pathImagen)) {
-      return res.sendFile(pathImagen);
-    }
+  if (modelo.video) {
+    const nombreArr = modelo.video.split("/");
+    const nombre = nombreArr[nombreArr.length - 1];
+    const [public_id] = nombre.split(".");
+    cloudinary.uploader.destroy(public_id);
   }
 
-  const pathImagen = path.join(__dirname, "../assets/no-image.jpg");
-  res.sendFile(pathImagen);
+  const { tempFilePath } = req.files.archivo;
+  const result = await cloudinary.uploader.upload(tempFilePath, {
+    resource_type: "video",
+  });
+  modelo.video = result.secure_url;
+  await modelo.save();
+
+  res.status(200).json({
+    msg: "Imagen cargada Correctamente",
+    modelo,
+  });
+};
+
+
+
+//borrar imagen
+const borrarVideoCloudinary = async (req, res) => {
+  try {
+    const { coleccion, id } = req.params;
+
+    let modelo;
+
+    switch (coleccion) {
+      case "usuarios":
+        modelo = await Usuario.findById(id);
+        if (!modelo) {
+          return res.status(400).json({
+            msg: `No existe un usuario con el id ${id}`,
+          });
+        }
+
+        break;
+
+      case "videos":
+        modelo = await Video.findById(id);
+        if (!modelo) {
+          return res.status(400).json({
+            msg: `No existe un video con el id ${id}`,
+          });
+        }
+
+        break;
+
+      default:
+        return res.status(500).json({ msg: "Se me olvidó validar esto" });
+    }
+
+    if (modelo.video) {
+      const nombreArr = modelo.video.split("/");
+      const nombre = nombreArr[nombreArr.length - 1];
+      const [public_id] = nombre.split(".");
+      cloudinary.uploader.destroy(public_id);
+      modelo.video = "";
+      modelo.save();
+    }
+
+    res.status(200).json({
+      msg: "Eliminado Correctamente",
+      modelo,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      msg: "Error al eliminar el usuario",
+    });
+  }
 };
 
 module.exports = {
-  cargarArchivo,
   CargarImagenCloudinary,
-  actualizarImagen,
-  mostrarImagen,
   actualizarImagenCloudinary,
-  borrarImagen
-  //actualizarImagenFirebase
+  borrarImagen,
+  CargarVideoCloudinary,
+  actualizarVideoCloudinary,
+  borrarVideoCloudinary
 };

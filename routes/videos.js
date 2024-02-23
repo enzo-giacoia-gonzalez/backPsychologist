@@ -3,13 +3,13 @@ const { check } = require('express-validator');
 
 const { validarJWT, validarCampos, esAdminRole } = require('../middlewares');
 
-const { crearProducto,
-        obtenerProductos,
-        obtenerProducto,
-        actualizarProducto, 
-        borrarProducto } = require('../controllers/productos');
+const {  crearVideo,
+    obtenerVideos,
+    obtenerVideo,
+    actualizarVideo,
+    borrarVideo } = require('../controllers/videos');
 
-const { existeCategoriaPorId, existeProductoPorId } = require('../helpers/db-validators');
+const { existeVideoPorId } = require('../helpers/db-validators');
 
 const router = Router();
 
@@ -18,43 +18,41 @@ const router = Router();
  */
 
 //  Obtener todas las categorias - publico
-router.get('/', obtenerProductos );
+router.get('/', obtenerVideos );
 
 
 // Obtener una categoria por id - publico
 router.get('/:id',[
     check('id', 'No es un id de Mongo válido').isMongoId(),
-    check('id').custom( existeProductoPorId ),
+    check('id').custom( existeVideoPorId ),
     validarCampos,
-], obtenerProducto );
+], obtenerVideo );
 
 // Crear categoria - privado - cualquier persona con un token válido
 router.post('/', [ 
     validarJWT,
     esAdminRole,
     check('nombre','El nombre es obligatorio').not().isEmpty(),
-    check('categoria','No es un id de Mongo').isMongoId(),
-    check('categoria').custom( existeCategoriaPorId ),
     validarCampos
-], crearProducto );
+], crearVideo );
 
 // Actualizar - privado - cualquiera con token válido
 router.put('/:id',[
     validarJWT,
     esAdminRole,
     // check('categoria','No es un id de Mongo').isMongoId(),
-    check('id').custom( existeProductoPorId ),
+    check('id').custom( existeVideoPorId ),
     validarCampos
-], actualizarProducto );
+], actualizarVideo );
 
 // Borrar una categoria - Admin
 router.delete('/:id',[
     validarJWT,
     esAdminRole,
     check('id', 'No es un id de Mongo válido').isMongoId(),
-    check('id').custom( existeProductoPorId ),
+    check('id').custom( existeVideoPorId ),
     validarCampos,
-], borrarProducto);
+], borrarVideo);
 
 
 module.exports = router;
