@@ -1,15 +1,18 @@
 const { response, request } = require("express");
 const { Usuario, Comprobante } = require("../models");
+const { getTemplatePay, sendEmailPay  } = require("../helpers/nodemailer");
 
 
 	
 
 const obtenerComprobantes = async (req, res = response) => {
+  const query = { estado: true };
+
+  
   try {
-    const comprobantes = await Comprobante.find();
+    const comprobantes = await Comprobante.find(query);
 
     res.status(200).json({
-      msg: "Exito al obtener los comprobantes",
       comprobantes,
     });
   } catch (error) {
@@ -26,12 +29,11 @@ const obtenerComprobanteID = async (req, res = response) => {
 
     const comprobantes = await Comprobante.findById(id);
 
-    res.status(200).json({
-      msg: "Comprobantes obtenidos",
+    return res.status(200).json({
       comprobantes,
     });
   } catch (error) {
-    res.status(400).json({
+    return res.status(500).json({
       msg: "Error al obtener los comprobantes",
       error,
     });
@@ -40,28 +42,17 @@ const obtenerComprobanteID = async (req, res = response) => {
 
 const agregarComprobante = async (req = request, res = response) => {
   try {
-    const { estado, usuario, titulo, pago, precio, fechayhora, ...body } =
+    const { estado, usuario, titulo, pago, precio, moneda, fechayhora, linksesion, ...body } =
       req.body;
-
-    const comprobante = await Comprobante.findOne({ titulo });
-
-    const comprobanteHora = await Comprobante.findOne({ fechayhora });
 
 
     const usuarioo = await Usuario.findById(usuario);
 
     if (!usuarioo) {
-      res.status(400).json({
+      return res.status(400).json({
         msg: "No hay usuario",
       });
     }
-
-    if (comprobante || comprobanteHora) {
-      return res.status(400).json({
-        msg: `El comprobante ${comprobante} con ese nombre y/o hora, ya existe elige otro nombre y/o hora`,
-      });
-    }
-
 
     let año
 
@@ -96,6 +87,8 @@ const agregarComprobante = async (req = request, res = response) => {
       titulo: titulo.toLowerCase(),
       pago: pago,
       precio:precio,
+      moneda:moneda,
+      linksesion:linksesion,
       fechayhora:horatotal,
       usuario: usuarioo._id,
     };
@@ -105,28 +98,35 @@ const agregarComprobante = async (req = request, res = response) => {
     // Guardar DB
     nuevoComprobante.save(true);
 
-    res.status(201).json({
+
+    const template = getTemplatePay(usuarioo.nombre,linksesion,fechayhora);
+
+    await sendEmailPay(usuarioo.correo, "Datos de la sesion", template);
+
+    
+
+    return res.status(201).json({
       nuevoComprobante,
-      msg: "comprobante creado exitosamente",
+      msg: "Pago realizado exitosamente. Revisa tu email y tus comprobantes",
     });
   } catch (error) {
-    res.status(400).json(console.log(error));
+    return res.status(400).json(console.log(error));
   }
 };
 
 const editarComprobante = async (req, res = response) => {
   try {
     const { id } = req.params;
-    const { estado, usuario, precio, titulo, pago,fechayhora, ...body } = req.body;
+    const { estado,titulo, usuario, fechayhora, precio, pago,moneda, ...body } = req.body;
 
     const usuarioencontrado = await Usuario.findById(usuario);
 
 
     console.log(usuarioencontrado)
 
-    if (!precio || !titulo || !usuario || !pago) {
+    if (!precio || !titulo || !usuario || !pago || !moneda) {
       return res.status(400).json({
-        msg: "los campos Titulo, precio, usuario y pago no pueden estar vacios",
+        msg: "los campos Titulo, usuario, precio, pago y moneda no pueden estar vacios",
       });
     }
 
@@ -165,6 +165,7 @@ const editarComprobante = async (req, res = response) => {
       titulo: titulo.toLowerCase(),
       pago: pago,
       precio:precio,
+      moneda:moneda,
       fechayhora:horatotal,
       usuario: usuarioencontrado._id,
     };
@@ -177,10 +178,13 @@ const editarComprobante = async (req, res = response) => {
 
     return res.status(200).json({
       comprobante,
-      msg: "Producto editado correctamente",
+      msg: "Comprobante editado correctamente",
     });
   } catch (error) {
-    console.log(error);
+    return res.status(400).json({
+      error,
+      msg:'No se pudo editar el comprobante consulte con un administrador'
+    })
   }
 };
 
@@ -196,13 +200,13 @@ const borrarComprobante = async (req, res = response) => {
 const comprobanteExiste = await Comprobante.findById(id)
 
 if (!comprobanteExiste) {
-  res.status(400).json({
+  return res.status(400).json({
     msg:'Comprobante no existe'
   })
 }
 
 if (comprobanteExiste.estado === false) {
-  res.status(400).json({
+  return res.status(400).json({
     msg:'El comprobante ya ha sido borrado'
   })
 }
@@ -210,13 +214,13 @@ if (comprobanteExiste.estado === false) {
 
 const comprobanteBorrado = await Comprobante.findByIdAndUpdate( id, { estado: false }, {new: true });
 
-res.status(200).json({
+return res.status(200).json({
   msg:'Comprobante eliminado',
   comprobanteBorrado
 })
   } catch (error) {
-    res.status(400).json({
-      msg:'No se ha podido eliminar el comprobante'
+    return res.status(400).json({
+      msg:'No se ha podido eliminar el comprobante, consulte con el administrador'
     })
   }
 

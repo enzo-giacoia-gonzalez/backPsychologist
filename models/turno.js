@@ -26,6 +26,11 @@ const TurnosSchema = Schema({
         enum: ['APROBADO', 'RECHAZADO'],
         default:'RECHAZADO'
     },
+    moneda: {
+        type: String,
+        required: [true, 'Selecciona una opcion, es obligatorio'],
+        enum: ['ARG', 'USD'],
+    },
     usuario: {
         type: Schema.Types.ObjectId,
         ref: 'Usuario',
@@ -36,6 +41,9 @@ const TurnosSchema = Schema({
         default: true,
         required: true
     },
+    // createdAt: { type: Date, default: Date.now, expires: '43200' },
+// },{
+//     timestamps: true
 });
 
 

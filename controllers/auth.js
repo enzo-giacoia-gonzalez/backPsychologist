@@ -26,7 +26,7 @@ const login = async(req , res = response) => {
         // SI el usuario está activo
         if ( !usuario.estado ) {
             return res.status(400).json({
-                msg: 'Usuario / Password no son correctos - estado: false'
+                msg: 'Usuario / Password no son correctos - estado: false / desabilitado'
             });
         }
 
@@ -70,7 +70,9 @@ const googleSignin = async(req, res = response) => {
             // Tengo que crearlo
             const data = {
                 nombre,
+                apellido,
                 correo,
+                dni,
                 password: ':P',
                 recordartucontrasena,
                 img,
@@ -143,12 +145,12 @@ try {
  
  
          
-         res.status(200).json({
+         return res.status(200).json({
              msg:"Email de reestablecimiento enviado correctamente",
             token
          })
 } catch (error) {
-    res.status(400).json({
+    return res.status(400).json({
         msg:"Error al enviar el correo",
         error
     })
@@ -224,8 +226,8 @@ const recoverPassword = async (req, res = response) => {
          
       
     
-      res.status(200).json({
-        msg:"Contraseña Reestablecidad correctamente",
+      return res.status(200).json({
+        msg:"Contraseña Reestablecida correctamente",
         usuario
       })
 
@@ -233,7 +235,8 @@ const recoverPassword = async (req, res = response) => {
     
     
     } catch (error) {
-        res.status(401).json({
+        console.log(error)
+        return res.status(401).json({
             msg:'Hubo en error consulte con el administrador'
         })
     }

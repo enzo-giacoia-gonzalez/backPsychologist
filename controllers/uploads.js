@@ -43,7 +43,6 @@ const CargarImagenCloudinary = async (req, res = response) => {
   const img = secure_url;
 
   res.status(200).json({
-    msg: "Imagen cargada Correctamente",
     img
   });
   } catch (error) {
@@ -110,7 +109,7 @@ const actualizarImagenCloudinary = async (req, res = response) => {
   await modelo.save();
 
   res.status(200).json({
-    msg: "Imagen cargada Correctamente",
+    
     modelo,
   });
 };
@@ -216,7 +215,6 @@ const CargarVideoCloudinary = async (req, res = response) => {
  
 
   res.status(200).json({
-    msg: "Imagen cargada Correctamente",
     video,
   });
   } catch (error) {
@@ -276,7 +274,7 @@ const actualizarVideoCloudinary = async (req, res = response) => {
   await modelo.save();
 
   res.status(200).json({
-    msg: "Imagen cargada Correctamente",
+    
     modelo,
   });
 };

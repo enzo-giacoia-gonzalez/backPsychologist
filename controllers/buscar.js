@@ -2,6 +2,9 @@ const { response } = require('express');
 const { ObjectId } = require('mongoose').Types;
 
 const { Usuario, Turno, Comprobante } = require('../models');
+const turno = require('../models/turno');
+const comprobante = require('../models/comprobante');
+
 
 const coleccionesPermitidas = [
     'comprobantes',
@@ -13,19 +16,21 @@ const coleccionesPermitidas = [
 
 const buscarComprobantes= async( termino = '', res = response ) => {
 
+    
+
     const esMongoID = ObjectId.isValid( termino ); // TRUE 
 
     if ( esMongoID ) {
-        const comprobante = await Comprobante.findById(termino);
+        const comprobante = await comprobantes.findById(termino);
         return res.json({
             results: ( comprobante ) ? [ comprobante ] : []
         });
     }
 
     const regex = new RegExp( termino, 'i' );
-    const comprobantes  = await Comprobante.find({
-        $or: [{ titulo: regex }, { fechayhora: regex } ],
-        $and: [{ estado: true }]
+    const comprobantes  = await comprobante.find({
+        $or: [{ titulo: regex }, { fechayhora: regex }, ],
+        $and: [{ estado: true }, { pago: 'APROBADO' }, {fechayhora: { $gte: new Date().toISOString().slice(0,10)} } ]
     });
 
     res.json({
@@ -71,7 +76,7 @@ const buscarUsuarios = async( termino = '', res = response ) => {
 
     const regex = new RegExp( termino, 'i' );
     const usuarios = await Usuario.find({
-        $or: [{ nombre: regex }, { correo: regex }],
+        $or: [{ nombre: regex },{ apellido: regex }, { correo: regex },{ dni: regex }],
         $and: [{ estado: true }]
     });
 

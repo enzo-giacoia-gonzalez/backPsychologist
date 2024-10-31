@@ -10,7 +10,7 @@ const validarJWT = async( req = request, res = response, next ) => {
 
     if ( !token ) {
         return res.status(401).json({
-            msg: 'No hay token en la petición'
+            msg: 'No hay token en la petición, intenta iniciar sesion'
         });
     }
 
@@ -42,7 +42,7 @@ const validarJWT = async( req = request, res = response, next ) => {
 
         console.log(error);
         res.status(401).json({
-            msg: 'Token no válido'
+            msg: 'Token no válido, intente iniciar sesion nuevamente'
         })
     }
 

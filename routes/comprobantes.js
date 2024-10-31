@@ -23,8 +23,6 @@ router.get('/:id',[
 
 router.post('/', [ 
     validarJWT,
-    esAdminRole,
-    check('titulo','El nombre es obligatorio').not().isEmpty(),
     validarCampos
 ], agregarComprobante );
 
@@ -37,6 +35,7 @@ router.put('/:id',[
     check('usuario','El usuario es obligatorio').not().isEmpty(),
     check('pago','El pago es obligatorio').not().isEmpty(),
     check('precio','El precio es obligatorio').not().isEmpty(),
+    check('moneda','La moneda es obligatoria').not().isEmpty(),
     validarCampos
 ],editarComprobante );
 

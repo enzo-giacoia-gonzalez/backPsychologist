@@ -21,13 +21,17 @@ router.get('/:id',[
 router.post('/', [ 
     validarJWT,
     esAdminRole,
+    check('titulo','El nombre es obligatorio').not().isEmpty(),
+    check('usuario','El usuario es obligatorio').not().isEmpty(),
+    check('precio','El precio es obligatorio').not().isEmpty(),
+    check('moneda','Seleccione un tipo de moenda es obligatorio').not().isEmpty(),
+    check('linksesion','Coloque el link de la sesion es obligatorio').not().isEmpty(),
     validarCampos
 ], agregarTurno );
 
 
 router.put('/:id',[
     validarJWT,
-    esAdminRole,
     check('id', 'No es un id de Mongo válido').isMongoId(),
     check('titulo','El nombre es obligatorio').not().isEmpty(),
     check('usuario','El usuario es obligatorio').not().isEmpty(),

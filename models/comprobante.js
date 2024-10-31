@@ -15,6 +15,10 @@ const ComprobantesSchema = Schema({
         default: true,
         required: true
     },
+    linksesion:{
+        type:String,
+        required:[true,'El link es requerido']
+    },
     fechayhora:{
         type:String,
         required:true,
@@ -27,6 +31,11 @@ const ComprobantesSchema = Schema({
     precio:{
         type: Number,
         required: [true, 'Coloque el precio que la persona pago'],
+    },
+    moneda: {
+        type: String,
+        required: [true, 'Selecciona una opcion, es obligatorio'],
+        enum: ['ARG', 'USD'],
     }
 });
 

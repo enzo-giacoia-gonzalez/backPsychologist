@@ -1,17 +1,23 @@
-const { response, request } = require("express");
+const { response } = require("express");
 const { Usuario, Turno } = require("../models");
+const {
+  getTemplatePayResend,
+  getTemplateShiftResend,
+  sendEmailResend,
+} = require("../helpers/nodemailer");
 
 const obtenerTurnos = async (req, res = response) => {
+  const query = { estado: true };
+
   try {
-    const turnos = await Turno.find();
+    const turnos = await Turno.find(query);
 
     res.status(200).json({
-      msg: "Exito al obtener los comprobantes",
       turnos,
     });
   } catch (error) {
     res.status(400).json({
-      msg: "No se han podido obtener los comprobantes",
+      msg: "No se han podido obtener los turnos",
       error,
     });
   }
@@ -24,7 +30,6 @@ const obtenerTurnoID = async (req, res = response) => {
     const turnos = await Turno.findById(id);
 
     res.status(200).json({
-      msg: "Comprobantes obtenidos",
       turnos,
     });
   } catch (error) {
@@ -44,18 +49,28 @@ const agregarTurno = async (req, res = response) => {
       titulo,
       precio,
       pago,
+      moneda,
       linksesion,
       fechayhora,
       ...body
     } = req.body;
 
+    const query = { estado: true };
+
     const usuarioEncontrado = await Usuario.findById(usuario);
 
     const turnoHora = await Turno.findOne({ fechayhora });
 
-    let turnos = await Turno.find();
+    let turnos = await Turno.find(query);
 
-    const turnoUsuario = await Turno.findOne({ usuario });
+    var fechaActual = new Date();
+    var fechaBody = new Date(fechayhora);
+
+    if (fechaBody < fechaActual) {
+      return res
+        .status(400)
+        .json({ msg: "La fecha no puede ser menor a la fecha actual" });
+    }
 
     if (!usuarioEncontrado) {
       return res.status(400).json({
@@ -72,11 +87,11 @@ const agregarTurno = async (req, res = response) => {
 
     let diadb;
 
-    let acumulacionañosdb = []
+    let acumulacionañosdb = [];
 
-    let acumulacionmesesdb = []
+    let acumulacionmesesdb = [];
 
-    let acumulaciondiasdb = []
+    let acumulaciondiasdb = [];
 
     let horadb;
 
@@ -84,7 +99,7 @@ const agregarTurno = async (req, res = response) => {
 
     let horatotaldb;
 
-    let año
+    let año;
 
     let mes;
 
@@ -98,7 +113,7 @@ const agregarTurno = async (req, res = response) => {
 
     let horariosdisponibles = [];
 
-    año = fechayhora.slice(0,4)
+    año = fechayhora.slice(0, 4);
 
     mes = fechayhora.slice(5, 7);
 
@@ -117,11 +132,11 @@ const agregarTurno = async (req, res = response) => {
 
       diadb = turno.fechayhora.slice(8, 10);
 
-      acumulacionañosdb[i] = añoenbasededatos
+      acumulacionañosdb[i] = añoenbasededatos;
 
-      acumulacionmesesdb[i] = mesdb
+      acumulacionmesesdb[i] = mesdb;
 
-      acumulaciondiasdb[i] = diadb
+      acumulaciondiasdb[i] = diadb;
 
       horadb = turno.fechayhora.slice(11, 13);
 
@@ -129,92 +144,77 @@ const agregarTurno = async (req, res = response) => {
 
       horatotaldb = horadb + minutosdb;
 
-      
-
-
-      if ((acumulacionañosdb[i]==año) && (acumulacionmesesdb[i]==mes && acumulaciondiasdb[i]==dia)){
+      if (
+        acumulacionañosdb[i] == año &&
+        acumulacionmesesdb[i] == mes &&
+        acumulaciondiasdb[i] == dia
+      ) {
         horatotalacumulada[i] = horatotaldb;
 
         horariosdisponibles[i] = horatotal - horatotalacumulada[i];
 
-        horariosdisponibles[i] = Math.abs(horariosdisponibles[i])
+        horariosdisponibles[i] = Math.abs(horariosdisponibles[i]);
 
-        i = i + 1
+        i = i + 1;
       }
 
-      
-
-      if ((acumulacionañosdb[i]==año && acumulacionmesesdb[i]==mes) && (acumulaciondiasdb[i]==dia)){
-
+      if (
+        acumulacionañosdb[i] == año &&
+        acumulacionmesesdb[i] == mes &&
+        acumulaciondiasdb[i] == dia
+      ) {
         horatotalacumulada[i] = horatotaldb;
 
         horariosdisponibles[i] = horatotal - horatotalacumulada[i];
 
-        horariosdisponibles[i] = Math.abs(horariosdisponibles[i])
+        horariosdisponibles[i] = Math.abs(horariosdisponibles[i]);
 
-        i = i + 1
+        i = i + 1;
       }
 
-      if ((acumulacionañosdb[i]==año && acumulaciondiasdb[i]==dia)&& (acumulacionmesesdb[i]==mes)){
-
+      if (
+        acumulacionañosdb[i] == año &&
+        acumulaciondiasdb[i] == dia &&
+        acumulacionmesesdb[i] == mes
+      ) {
         horatotalacumulada[i] = horatotaldb;
 
         horariosdisponibles[i] = horatotal - horatotalacumulada[i];
 
-        horariosdisponibles[i] = Math.abs(horariosdisponibles[i])
+        horariosdisponibles[i] = Math.abs(horariosdisponibles[i]);
 
-        i = i + 1
+        i = i + 1;
       }
 
-
-
-
-      if (acumulacionañosdb[i]==año && acumulacionmesesdb[i]==mes && acumulaciondiasdb[i]==dia){
+      if (
+        acumulacionañosdb[i] == año &&
+        acumulacionmesesdb[i] == mes &&
+        acumulaciondiasdb[i] == dia
+      ) {
         horatotalacumulada[i] = horatotaldb;
 
         horariosdisponibles[i] = horatotal - horatotalacumulada[i];
 
-        horariosdisponibles[i] = Math.abs(horariosdisponibles[i])
+        horariosdisponibles[i] = Math.abs(horariosdisponibles[i]);
 
-        i = i + 1
+        i = i + 1;
       }
-      
-
-      
-      
     }
 
-    console.log(horariosdisponibles)
+    console.log(horariosdisponibles);
     console.log(horatotalacumulada);
-    console.log(acumulacionañosdb)
-    
 
-    const sinhorarios = horariosdisponibles.filter(
-      (horario) => horario < 100
-    );
+    const sinhorarios = horariosdisponibles.filter((horario) => horario < 100);
 
-  
- 
-
- 
-  
-      if (sinhorarios[0]) {
-          return res.status(400).json({
-            msg: "La hora que queres poner no cumple con los requisitos",
-          });
-        }
-      
-    
+    if (sinhorarios[0]) {
+      return res.status(400).json({
+        msg: "La hora que queres poner no cumple con los requisitos",
+      });
+    }
 
     if (turnoHora) {
       return res.status(400).json({
         msg: `Ya existe un turno asignado en ese horario a nombre de ${turnoHora.usuario}`,
-      });
-    }
-
-    if (turnoUsuario) {
-      return res.status(400).json({
-        msg: `Ya existe un turno asignado a nombre de ${turnoUsuario}`,
       });
     }
 
@@ -224,6 +224,7 @@ const agregarTurno = async (req, res = response) => {
       titulo: titulo.toLowerCase(),
       linksesion: linksesion,
       precio,
+      moneda,
       fechayhora: fechayhora.toString(),
       usuario: usuarioEncontrado._id,
     };
@@ -233,42 +234,65 @@ const agregarTurno = async (req, res = response) => {
     // Guardar DB
     nuevoTurno.save(true);
 
-    res.status(201).json({
+    return res.status(200).json({
       nuevoTurno,
-      msg: "comprobante creado exitosamente",
+      msg: "Turno creado exitosamente",
     });
   } catch (error) {
-    res.status(400).json(console.log(error));
+    res.status(400).json(error);
   }
 };
 
 const editarTurno = async (req, res = response) => {
   try {
     const { id } = req.params;
-    const { estado, usuario, precio, pago, titulo, linksesion,fechayhora,img,...body } = req.body;
 
-    const turnoencontrado = await Turno.findById(id)
+    const query = { estado: true };
+    const {
+      estado,
+      usuario,
+      precio,
+      pago,
+      moneda,
+      titulo,
+      linksesion,
+      fechayhora,
+      img,
+      ...body
+    } = req.body;
 
-    let turnos = await Turno.find();
+    var fechaActual = new Date();
+    var fechaBody = new Date(fechayhora);
 
-    console.log(turnos)
-    const Fechaturno = await Turno.findOne({ fechayhora });
-
-    if(!turnoencontrado){
-      return res.status(400).json({
-        msg:'No hay un turno para editar'
-      })
+    if (fechaBody < fechaActual) {
+      return res
+        .status(400)
+        .json({ msg: "La fecha no puede ser menor a la fecha actual" });
     }
 
-    if (body.titulo === turnos.titulo) {
+    const turnoencontrado = await Turno.findById(id);
+
+    let turnos = await Turno.find(query);
+
+    const usuarioEncontrado = await Usuario.findById(usuario);
+
+    if (!turnoencontrado) {
       return res.status(400).json({
-        msg:'Intenta colocar otro titulo diferente'
-      })
+        msg: "No hay un turno para editar",
+      });
     }
 
-     if (!precio && !titulo && !usuario && !linksesion && !fechayhora &&!pago ) {
+    if (
+      !titulo &&
+      !usuario &&
+      !linksesion &&
+      !fechayhora &&
+      !precio &&
+      !pago &&
+      !moneda
+    ) {
       return res.status(400).json({
-        msg: "los campos titulo, precio, linksesion ,fecha, hora y pago no pueden estar vacios",
+        msg: "los campos titulo, usuario, linksesion ,fecha y hora, precio, pago y moneda no pueden estar vacios",
       });
     }
 
@@ -281,11 +305,11 @@ const editarTurno = async (req, res = response) => {
 
     let diadb;
 
-    let acumulacionañosdb = []
+    let acumulacionañosdb = [];
 
-    let acumulacionmesesdb = []
+    let acumulacionmesesdb = [];
 
-    let acumulaciondiasdb = []
+    let acumulaciondiasdb = [];
 
     let horadb;
 
@@ -293,7 +317,7 @@ const editarTurno = async (req, res = response) => {
 
     let horatotaldb;
 
-    let año
+    let año;
 
     let mes;
 
@@ -307,7 +331,7 @@ const editarTurno = async (req, res = response) => {
 
     let horariosdisponibles = [];
 
-    año = fechayhora.slice(0,4)
+    año = fechayhora.slice(0, 4);
 
     mes = fechayhora.slice(5, 7);
 
@@ -326,11 +350,11 @@ const editarTurno = async (req, res = response) => {
 
       diadb = turno.fechayhora.slice(8, 10);
 
-      acumulacionañosdb[i] = añoenbasededatos
+      acumulacionañosdb[i] = añoenbasededatos;
 
-      acumulacionmesesdb[i] = mesdb
+      acumulacionmesesdb[i] = mesdb;
 
-      acumulaciondiasdb[i] = diadb
+      acumulaciondiasdb[i] = diadb;
 
       horadb = turno.fechayhora.slice(11, 13);
 
@@ -338,110 +362,153 @@ const editarTurno = async (req, res = response) => {
 
       horatotaldb = horadb + minutosdb;
 
-      if(turno._id==id){
-        i= i + 1 
+      if (turno._id == id) {
+        i = i + 1;
       }
 
       horatotalacumulada[i] = horatotaldb;
 
-      if ((acumulacionañosdb[i]==año) && (acumulacionmesesdb[i]==mes && acumulaciondiasdb[i]==dia)){
-      
+      if (
+        acumulacionañosdb[i] == año &&
+        acumulacionmesesdb[i] == mes &&
+        acumulaciondiasdb[i] == dia
+      ) {
         horariosdisponibles[i] = horatotal - horatotalacumulada[i];
 
-        horariosdisponibles[i] = Math.abs(horariosdisponibles[i])
+        horariosdisponibles[i] = Math.abs(horariosdisponibles[i]);
 
-        i = i + 1
+        i = i + 1;
       }
 
-      
-
-      if ((acumulacionañosdb[i]==año && acumulacionmesesdb[i]==mes) && (acumulaciondiasdb[i]==dia)){
-
+      if (
+        acumulacionañosdb[i] == año &&
+        acumulacionmesesdb[i] == mes &&
+        acumulaciondiasdb[i] == dia
+      ) {
         horariosdisponibles[i] = horatotal - horatotalacumulada[i];
 
-        horariosdisponibles[i] = Math.abs(horariosdisponibles[i])
+        horariosdisponibles[i] = Math.abs(horariosdisponibles[i]);
 
-        i = i + 1
+        i = i + 1;
       }
 
-      if ((acumulacionañosdb[i]==año && acumulaciondiasdb[i]==dia)&& (acumulacionmesesdb[i]==mes)){
-
+      if (
+        acumulacionañosdb[i] == año &&
+        acumulaciondiasdb[i] == dia &&
+        acumulacionmesesdb[i] == mes
+      ) {
         horariosdisponibles[i] = horatotal - horatotalacumulada[i];
 
-        horariosdisponibles[i] = Math.abs(horariosdisponibles[i])
+        horariosdisponibles[i] = Math.abs(horariosdisponibles[i]);
 
-        i = i + 1
+        i = i + 1;
       }
 
-
-
-
-      if (acumulacionañosdb[i]==año && acumulacionmesesdb[i]==mes && acumulaciondiasdb[i]==dia){
-        
+      if (
+        acumulacionañosdb[i] == año &&
+        acumulacionmesesdb[i] == mes &&
+        acumulaciondiasdb[i] == dia
+      ) {
         horariosdisponibles[i] = horatotal - horatotalacumulada[i];
 
-        horariosdisponibles[i] = Math.abs(horariosdisponibles[i])
+        horariosdisponibles[i] = Math.abs(horariosdisponibles[i]);
 
-        i = i + 1
+        i = i + 1;
       }
-      
-
-      
-      
     }
 
-    console.log(horariosdisponibles)
+    console.log(horariosdisponibles);
     console.log(horatotalacumulada);
-    console.log(acumulacionañosdb)
-    
+    console.log(acumulacionañosdb);
 
-    const sinhorarios = horariosdisponibles.filter(
-      (horario) => horario < 100
-    );
+    const sinhorarios = horariosdisponibles.filter((horario) => horario < 100);
 
-  
-    console.log(sinhorarios)
+    console.log(sinhorarios);
 
- 
-  
-      if (sinhorarios[0]) {
-          return res.status(400).json({
-            msg: "La hora que queres poner no cumple con los requisitos",
-          });
-        }
-
-
-   
-    
-    
+    if (sinhorarios[0]) {
+      return res.status(400).json({
+        msg: "La hora que queres poner no cumple con los requisitos",
+      });
+    }
 
     for (const turno of turnos) {
-      if (id!=turno._id && usuario==turno.usuario ) {
+      if (id != turno._id && usuario == turno.usuario) {
         return res.status(400).json({
-          msg:'EL usuario que intentas agregar ya tiene un turno asignado intenta asignar otro usuario o elimina y intentalo nuevamente'
-        })
+          msg: "EL usuario que intentas agregar ya tiene un turno asignado intenta asignar otro usuario o elimina y intentalo nuevamente",
+        });
       }
     }
-    
+
+    if (!body.pago === "APROBADO" || turnoencontrado.pago === "APROBADO") {
+      const template = getTemplateShiftResend(
+        usuarioEncontrado.nombre,
+        linksesion,
+        fechayhora
+      );
+
+      if (linksesion!= turnoencontrado.linksesion || fechayhora != turnoencontrado.fechayhora) {
+        await sendEmailResend(
+          usuarioEncontrado.correo,
+          "Datos actualizados de la sesion",
+          template
+        );
+      }
+     
+
+      body.pago = pago;
+      body.precio = precio;
+      body.moneda = moneda;
+      body.linksesion = linksesion;
+      body.titulo = titulo.toLowerCase();
+      body.fechayhora = fechayhora;
+      body.usuario = usuario;
+
+      console.log(body);
+
+      const TurnoActualizado = await Turno.findByIdAndUpdate(id, body, {
+        new: true,
+      });
+
+      return res.status(200).json({
+        TurnoActualizado,
+        msg: "Turno editado correctamente revisa su casilla de correo",
+      });
+    }
+
+    body.pago = pago;
+    body.precio = precio;
+    body.moneda = moneda;
+    body.linksesion = linksesion;
+    body.titulo = titulo.toLowerCase();
+    body.fechayhora = fechayhora;
+    body.usuario = usuario;
+
     
 
-    body.pago = pago
-    body.precio = precio
-    body.linksesion = linksesion
-    body.titulo = titulo.toLowerCase();
-    body.fechayhora = fechayhora
-    body.usuario = usuario
-    
     const TurnoActualizado = await Turno.findByIdAndUpdate(id, body, {
       new: true,
     });
 
+    const template = getTemplatePayResend(
+      usuarioEncontrado.nombre,
+      linksesion,
+      fechayhora
+    );
+    await sendEmailResend(
+      usuarioEncontrado.correo,
+      "Pago realizado con exito, verifica su casilla de correo",
+      template
+    );
+
     return res.status(200).json({
       TurnoActualizado,
-      msg: "Producto editado correctamente",
+      msg: "Turno editado correctamente",
     });
   } catch (error) {
     console.log(error);
+    return res.status(500).json({
+      msg: "Consulte con el administrador",
+    });
   }
 };
 
@@ -452,14 +519,14 @@ const borrarTurno = async (req, res = response) => {
     const TurnoExiste = await Turno.findById(id);
 
     if (!TurnoExiste) {
-      res.status(400).json({
+      return res.status(400).json({
         msg: "Comprobante no existe",
       });
     }
 
     if (TurnoExiste.estado === false) {
-      res.status(400).json({
-        msg: "El comprobante ya ha sido borrado",
+      return res.status(400).json({
+        msg: "El Turno ya ha sido borrado",
       });
     }
 
@@ -469,13 +536,13 @@ const borrarTurno = async (req, res = response) => {
       { new: true }
     );
 
-    res.status(200).json({
-      msg: "Comprobante eliminado",
+    return res.status(200).json({
+      msg: "Turno eliminado",
       turnoBorrado,
     });
   } catch (error) {
-    res.status(400).json({
-      msg: "No se ha podido eliminar el comprobante",
+    return res.status(500).json({
+      msg: "No se ha podido eliminar el turno, consulte con el administrador",
     });
   }
 };

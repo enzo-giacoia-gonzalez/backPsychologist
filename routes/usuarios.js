@@ -20,7 +20,8 @@ const { usuariosGet,
         usuariosDelete,
         usuariosPatch, 
         historyPayments,
-        usuarioGetCorreo} = require('../controllers/usuarios');
+        usuarioGetCorreo,
+        changeState} = require('../controllers/usuarios');
 
 const router = Router();
 
@@ -58,11 +59,14 @@ router.put('/:id',[
 
 router.post('/',[
     check('nombre', 'El nombre es obligatorio').not().isEmpty(),
+    check('apellido', 'El apellido es obligatorio').not().isEmpty(),
     check('password', 'El password debe de ser más de 6 letras').isLength({ min: 6 }),
+    check('dni', 'El dni es obligatorio').not().isEmpty(),
     check('correo', 'El correo no es válido').isEmail(),
     check('recordartucontrasena', 'Intenta ingresar un dato valido').not().isEmpty(),
-    check('correo').custom( emailExiste ),
     check('recordartucontrasena', 'Esta palabra es obligatoria').not().isEmpty(),
+    check('correo').custom( emailExiste ),
+    
     // check('rol', 'No es un rol válido').isIn(['ADMIN_ROLE','USER_ROLE']),
     //check('rol').custom( esRoleValido ), 
     validarCampos,
@@ -76,12 +80,19 @@ router.post('/history/payments', [
 
 router.delete('/:id',[
     validarJWT,
-    // esAdminRole,
-    tieneRole('ADMIN_ROLE', 'VENTAR_ROLE','OTRO_ROLE'),
+    esAdminRole,
     check('id', 'No es un ID válido').isMongoId(),
     check('id').custom( existeUsuarioPorId ),
     validarCampos
 ],usuariosDelete );
+
+router.put('/rol/:id',[
+    validarJWT,
+    esAdminRole,
+    check('id', 'No es un ID válido').isMongoId(),
+    //check('rol').custom( esRoleValido ), 
+    validarCampos
+],changeState );
 
 router.patch('/', usuariosPatch );
 

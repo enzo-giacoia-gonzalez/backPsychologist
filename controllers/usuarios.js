@@ -9,7 +9,7 @@ const { getToken, getTokenData } = require("../helpers/genandverify-jwt");
 const { getTemplate, sendEmail } = require("../helpers/nodemailer");
 
 const usuariosGet = async (req = request, res = response) => {
-  const { limite = 5, desde = 0 } = req.query;
+  const { limite = 0, desde = 0 } = req.query;
   const query = { estado: true };
 
   const [total, usuarios] = await Promise.all([
@@ -56,24 +56,50 @@ const usuarioGetId = async (req = request, res = response) => {
 
 const usuariosPost = async (req, res = response) => {
   try {
-    const { nombre, correo, password, recordartucontrasena, rol } = req.body;
+    const { nombre, apellido, correo, dni, password, repeatpassword, recordartucontrasena, rol } = req.body;
+
+    if (password!=repeatpassword) {
+      return res.status(400).json({
+        msg:'La contraseñas no coinciden'
+      })
+    }
+
+    const existeEmail = await Usuario.findOne({ correo });
+
+    if (existeEmail) {
+      return res.status(400).json({
+        msg: "El correo ya existe",
+      });
+    }
+  
+    const existeDni = await Usuario.findOne({ dni });
+    if (existeDni) {
+      return res.status(400).json({
+        msg: "El dni ya existe",
+      });
+    }
+
+
 
     const code = uuidv4();
 
     const usuario = new Usuario({
       nombre,
+      apellido,
       correo,
+      dni,
       password,
       recordartucontrasena,
       rol,
       code,
     });
+    
 
     const token = getToken({ correo, code });
 
     const template = getTemplate(nombre, token);
 
-    await sendEmail(correo, "Este es un email de prueba", template);
+    await sendEmail(correo, "Email de confirmacion de cuenta", template);
 
     // Encriptar la contraseña
     const salt = bcryptjs.genSaltSync();
@@ -84,8 +110,8 @@ const usuariosPost = async (req, res = response) => {
 
     return res.status(200).json({
       usuario,
-      success: true,
       msg: "Registrado correctamente, verifique su casilla de email para confirmar",
+      success: true,
     });
   } catch (error) {
     return res.status(400).json({
@@ -211,8 +237,7 @@ const usuariosPut = async (req, res = response) => {
     }
     
   } catch (error) {
-    console.log(error)
-    res.status(400).json({
+    res.status(500).json({
       msg: "Error al editar el usuario",
     });
   }
@@ -240,11 +265,56 @@ const usuariosDelete = async (req, res = response) => {
       usuario,
     });
   } catch (error) {
-    res.status(400).json({
+    res.status(500).json({
       msg: "No hay sido posible borrar el usuario",
     });
   }
 };
+
+const changeState = async (req, res= response) => {
+  try {
+    const { id } = req.params;
+    const {rol} = req.body
+    const token = req.headers;
+
+    usuarioFind = await Usuario.findById(id)
+
+    if (!token) {
+      return res.status(401).json("No hay token");
+    }
+
+    if (usuarioFind.estado == false) {
+      return res.status(400).json({
+        msg:'El usuario ha sido deshabilitado no se puede cambiar el rol'
+      })
+    }
+
+      if (usuarioFind.rol==rol) {
+         return res.status(400).json({
+          msg:`Intenta cambiar el rol por uno distinto, el usuario ${usuarioFind.nombre} ya posee el rol de ${usuarioFind.rol}`
+        })
+      }
+
+      const estadoActualizado = await Usuario.findByIdAndUpdate(id,{rol}, { new: true })
+
+      await estadoActualizado.save()
+
+      return res.status(200).json({
+        msg:`${usuarioFind.nombre} ahora es ${rol}`,
+        estadoActualizado
+      })
+
+    
+
+    
+    
+  } catch (error) {
+    return res.status(500).json({
+      msg: "No ha sido posible cambiar el rol del usuario",
+    });
+  }
+};
+
 
 module.exports = {
   usuariosGet,
@@ -256,4 +326,5 @@ module.exports = {
   usuariosPut,
   usuariosPatch,
   usuariosDelete,
+  changeState
 };
