@@ -1,3 +1,17 @@
-# WebServer + RestServer
+Backend Psicologist desarrollado con las siguientes tecnologías:
 
-Recuerden que deben de ejecutar ```npm install``` para reconstruir los módulos de Node.
+Back-End: Node.js + Express
+
+Dependencias del Back-End:
+
+bcryptjs
+cloudinary
+cors
+dotenv
+express-fileupload
+express-validator
+jsonwebtoken
+mongoose
+nodejs-nodemailer-outlook
+nodemailer
+uuid
